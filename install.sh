@@ -22,27 +22,33 @@ fi
 
 echo "📦 Detected OS: $OS"
 
-case "$OS" in
-  ubuntu|debian)
-    echo "Updating apt and installing dependencies..."
-    sudo apt update
-    sudo apt install -y git curl zsh tmux neovim btop fzf build-essential
-    if ! command -v fastfetch &>/dev/null; then
-      sudo apt install -y fastfetch 2>/dev/null || echo "Note: Fastfetch not in apt repos, install manually if needed."
-    fi
-    ;;
-  fedora|rhel)
-    echo "Installing packages with dnf..."
-    sudo dnf install -y git curl zsh tmux neovim btop fastfetch fzf @development-tools
-    ;;
-  arch|omarchy)
-    echo "Installing packages with pacman..."
-    sudo pacman -S --needed --noconfirm git curl zsh tmux neovim btop fastfetch fzf base-devel
-    ;;
-  *)
-    echo "⚠️ Unsupported or unknown OS ($OS). Please ensure git, tmux, neovim, btop, and fastfetch are installed."
-    ;;
-esac
+# Check missing essential CLI tools
+NEEDED_PKGS=()
+for pkg in git curl tmux nvim btop fastfetch fzf; do
+  if ! command -v "$pkg" &>/dev/null; then
+    NEEDED_PKGS+=("$pkg")
+  fi
+done
+
+if [ ${#NEEDED_PKGS[@]} -gt 0 ]; then
+  echo "Missing packages: ${NEEDED_PKGS[*]}"
+  case "$OS" in
+    ubuntu|debian)
+      sudo apt update && sudo apt install -y git curl zsh tmux neovim btop fzf build-essential
+      ;;
+    fedora|rhel)
+      sudo dnf install -y git curl zsh tmux neovim btop fastfetch fzf @development-tools
+      ;;
+    arch|omarchy)
+      sudo pacman -S --needed --noconfirm git curl zsh tmux neovim btop fastfetch fzf base-devel
+      ;;
+    *)
+      echo "⚠️ Unsupported OS ($OS). Please ensure git, tmux, neovim, btop, and fastfetch are installed."
+      ;;
+  esac
+else
+  echo "✅ All core package dependencies (git, tmux, nvim, btop, fastfetch, fzf) are already installed."
+fi
 
 # ------------------------------------------------------------------------------
 # 2. Starship Prompt Installation
