@@ -9,6 +9,105 @@ set -e
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "[INFO] Installing Terminal Dotfiles from: $DOTFILES_DIR"
 
+ALL_COMPONENTS=("nvim" "tmux" "btop" "fastfetch" "starship" "git" "shell")
+ONLY_LIST=()
+EXCLUDE_LIST=()
+HAS_ONLY=false
+
+usage() {
+  cat << EOF
+Usage: ./install.sh [OPTIONS]
+
+Options:
+  -o, --only <components>               Install ONLY the specified components (comma-separated).
+                                        Available: nvim, tmux, btop, fastfetch, starship, git, shell
+  -x, -e, --exclude, --except <components>
+                                        Install all components EXCEPT the specified ones (comma-separated).
+  -h, --help                            Show this help message.
+
+Examples:
+  ./install.sh                          # Install everything
+  ./install.sh --only nvim,tmux         # Install only neovim and tmux
+  ./install.sh --exclude btop,fastfetch # Install everything except btop and fastfetch
+EOF
+  exit 0
+}
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -o|--only)
+      if [ -z "$2" ] || [[ "$2" == -* ]]; then
+        echo "[ERROR] Option $1 requires an argument."
+        exit 1
+      fi
+      HAS_ONLY=true
+      IFS=',' read -ra ADDR <<< "$2"
+      for item in "${ADDR[@]}"; do
+        ONLY_LIST+=("$item")
+      done
+      shift 2
+      ;;
+    -x|-e|--exclude|--except)
+      if [ -z "$2" ] || [[ "$2" == -* ]]; then
+        echo "[ERROR] Option $1 requires an argument."
+        exit 1
+      fi
+      IFS=',' read -ra ADDR <<< "$2"
+      for item in "${ADDR[@]}"; do
+        EXCLUDE_LIST+=("$item")
+      done
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      ;;
+    *)
+      echo "[ERROR] Unknown option: $1"
+      usage
+      ;;
+  esac
+done
+
+is_enabled() {
+  local comp="$1"
+  
+  if [ "$HAS_ONLY" = true ]; then
+    local found=false
+    for item in "${ONLY_LIST[@]}"; do
+      if [ "$item" = "$comp" ]; then
+        found=true
+        break
+      fi
+    done
+    if [ "$found" = false ]; then
+      return 1
+    fi
+  fi
+
+  for item in "${EXCLUDE_LIST[@]}"; do
+    if [ "$item" = "$comp" ]; then
+      return 1
+    fi
+  done
+
+  return 0
+}
+
+ACTIVE_COMPONENTS=()
+for comp in "${ALL_COMPONENTS[@]}"; do
+  if is_enabled "$comp"; then
+    ACTIVE_COMPONENTS+=("$comp")
+  fi
+done
+
+echo "[INFO] Active components to install: ${ACTIVE_COMPONENTS[*]}"
+
+if [ ${#ACTIVE_COMPONENTS[@]} -eq 0 ]; then
+  echo "[INFO] No components selected. Exiting."
+  exit 0
+fi
+
 # ------------------------------------------------------------------------------
 # 1. OS Detection & Package Installation
 # ------------------------------------------------------------------------------
@@ -22,48 +121,50 @@ fi
 
 echo "[INFO] Detected OS: $OS"
 
-# Check missing essential CLI tools
+# Check missing essential CLI tools for selected components
 NEEDED_PKGS=()
-for pkg in git curl tmux nvim btop fastfetch fzf; do
-  if ! command -v "$pkg" &>/dev/null; then
-    NEEDED_PKGS+=("$pkg")
-  fi
-done
+if is_enabled "git" && ! command -v git &>/dev/null; then NEEDED_PKGS+=("git"); fi
+if is_enabled "tmux" && ! command -v tmux &>/dev/null; then NEEDED_PKGS+=("tmux"); fi
+if is_enabled "nvim" && ! command -v nvim &>/dev/null; then NEEDED_PKGS+=("neovim"); fi
+if is_enabled "btop" && ! command -v btop &>/dev/null; then NEEDED_PKGS+=("btop"); fi
+if is_enabled "fastfetch" && ! command -v fastfetch &>/dev/null; then NEEDED_PKGS+=("fastfetch"); fi
 
 if [ ${#NEEDED_PKGS[@]} -gt 0 ]; then
   echo "Missing packages: ${NEEDED_PKGS[*]}"
   case "$OS" in
     ubuntu|debian)
-      sudo apt update && sudo apt install -y git curl zsh tmux neovim btop fzf build-essential
+      sudo apt update && sudo apt install -y "${NEEDED_PKGS[@]}"
       ;;
     fedora|rhel)
-      sudo dnf install -y git curl zsh tmux neovim btop fastfetch fzf @development-tools
+      sudo dnf install -y "${NEEDED_PKGS[@]}"
       ;;
     arch|omarchy)
-      sudo pacman -S --needed --noconfirm git curl zsh tmux neovim btop fastfetch fzf base-devel
+      sudo pacman -S --needed --noconfirm "${NEEDED_PKGS[@]}"
       ;;
     *)
-      echo "[WARNING] Unsupported OS ($OS). Please ensure git, tmux, neovim, btop, and fastfetch are installed."
+      echo "[WARNING] Unsupported OS ($OS). Please install missing packages manually: ${NEEDED_PKGS[*]}"
       ;;
   esac
 else
-  echo "[INFO] All core package dependencies (git, tmux, nvim, btop, fastfetch, fzf) are already installed."
+  echo "[INFO] All core package dependencies for selected components are already installed."
 fi
 
 # ------------------------------------------------------------------------------
 # 2. Starship Prompt Installation
 # ------------------------------------------------------------------------------
-if ! command -v starship &>/dev/null; then
-  echo "[INFO] Installing Starship prompt engine..."
-  curl -sS https://starship.rs/install.sh | sh -s -- -y
-else
-  echo "[INFO] Starship prompt is already installed."
+if is_enabled "starship"; then
+  if ! command -v starship &>/dev/null; then
+    echo "[INFO] Installing Starship prompt engine..."
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
+  else
+    echo "[INFO] Starship prompt is already installed."
+  fi
 fi
 
 # ------------------------------------------------------------------------------
-# 3. Create ~/.config Subdirectories & Deploy Configs
+# 3. Deploy Configs
 # ------------------------------------------------------------------------------
-echo "[INFO] Deploying terminal configurations to ~/.config/ ..."
+echo "[INFO] Deploying selected configurations..."
 mkdir -p "$HOME/.config"
 
 deploy_config() {
@@ -80,32 +181,33 @@ deploy_config() {
   ln -sf "$src" "$dest"
 }
 
-deploy_config "$DOTFILES_DIR/config/nvim" "$HOME/.config/nvim"
-deploy_config "$DOTFILES_DIR/config/tmux" "$HOME/.config/tmux"
-deploy_config "$DOTFILES_DIR/config/btop" "$HOME/.config/btop"
-deploy_config "$DOTFILES_DIR/config/fastfetch" "$HOME/.config/fastfetch"
-deploy_config "$DOTFILES_DIR/config/starship.toml" "$HOME/.config/starship.toml"
-deploy_config "$DOTFILES_DIR/config/git" "$HOME/.config/git"
+if is_enabled "nvim"; then deploy_config "$DOTFILES_DIR/config/nvim" "$HOME/.config/nvim"; fi
+if is_enabled "tmux"; then deploy_config "$DOTFILES_DIR/config/tmux" "$HOME/.config/tmux"; fi
+if is_enabled "btop"; then deploy_config "$DOTFILES_DIR/config/btop" "$HOME/.config/btop"; fi
+if is_enabled "fastfetch"; then deploy_config "$DOTFILES_DIR/config/fastfetch" "$HOME/.config/fastfetch"; fi
+if is_enabled "starship"; then deploy_config "$DOTFILES_DIR/config/starship.toml" "$HOME/.config/starship.toml"; fi
+if is_enabled "git"; then deploy_config "$DOTFILES_DIR/config/git" "$HOME/.config/git"; fi
 
 # ------------------------------------------------------------------------------
 # 4. Deploy Shell Configuration (~/.bashrc & ~/.bashrc.local)
 # ------------------------------------------------------------------------------
-echo "[INFO] Deploying shell configuration..."
+if is_enabled "shell"; then
+  echo "[INFO] Deploying shell configuration..."
 
-if [ -f "$HOME/.bashrc" ] && [ ! -L "$HOME/.bashrc" ]; then
-  echo "  - Backing up ~/.bashrc to ~/.bashrc.bak"
-  cp "$HOME/.bashrc" "$HOME/.bashrc.bak"
-fi
+  if [ -f "$HOME/.bashrc" ] && [ ! -L "$HOME/.bashrc" ]; then
+    echo "  - Backing up ~/.bashrc to ~/.bashrc.bak"
+    cp "$HOME/.bashrc" "$HOME/.bashrc.bak"
+  fi
 
-ln -sf "$DOTFILES_DIR/shell/bashrc" "$HOME/.bashrc"
+  ln -sf "$DOTFILES_DIR/shell/bashrc" "$HOME/.bashrc"
 
-if [ ! -f "$HOME/.bashrc.local" ]; then
-  echo "  - Initializing ~/.bashrc.local from template"
-  cp "$DOTFILES_DIR/templates/bashrc.local.template" "$HOME/.bashrc.local"
+  if [ ! -f "$HOME/.bashrc.local" ]; then
+    echo "  - Initializing ~/.bashrc.local from template"
+    cp "$DOTFILES_DIR/templates/bashrc.local.template" "$HOME/.bashrc.local"
+  fi
 fi
 
 echo "=============================================================================="
 echo "Terminal environment setup complete."
 echo "Run 'source ~/.bashrc' or restart your shell to apply changes."
-echo "Add any machine-specific secrets/keys to ~/.bashrc.local"
 echo "=============================================================================="

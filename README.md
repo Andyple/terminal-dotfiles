@@ -34,6 +34,33 @@ curl -fsSL https://raw.githubusercontent.com/Andyple/terminal-dotfiles/main/inst
 
 ---
 
+## Installation Flags & Selective Deployment
+
+Available components: `nvim`, `tmux`, `btop`, `fastfetch`, `starship`, `git`, `shell`.
+
+- **Default (No flags)**: Installs and deploys all components.
+- **`-o`, `--only <components>`**: Install ONLY specific components.
+- **`-x`, `-e`, `--exclude`, `--except <components>`**: Install everything EXCEPT specific components.
+
+### Examples
+
+Install everything:
+```bash
+./install.sh
+```
+
+Install only Neovim and Tmux:
+```bash
+./install.sh --only nvim,tmux
+```
+
+Install everything except Btop and Fastfetch:
+```bash
+./install.sh --exclude btop,fastfetch
+```
+
+---
+
 ## Installing on Systems With Existing Tools
 
 The installer is safe to run on systems where some or all of these tools are already installed.
@@ -42,7 +69,7 @@ The installer is safe to run on systems where some or all of these tools are alr
 The installer checks whether each tool is already present before calling the package manager. If `nvim`, `tmux`, or any other tool is already installed, it is left exactly as-is:
 
 ```
-[INFO] All core package dependencies (git, tmux, nvim, btop, fastfetch, fzf) are already installed.
+[INFO] All core package dependencies for selected components are already installed.
 ```
 
 ### Config Files — Backed Up, Not Deleted
