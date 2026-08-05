@@ -34,6 +34,34 @@ curl -fsSL https://raw.githubusercontent.com/Andyple/terminal-dotfiles/main/inst
 
 ---
 
+## 🛡️ Installing on Systems With Existing Tools
+
+The installer is safe to run on systems where some or all of these tools are already installed.
+
+### Software Binaries — Left Untouched
+The installer checks whether each tool is already present before calling the package manager. If `nvim`, `tmux`, or any other tool is already installed, it is left exactly as-is:
+
+```
+✅ All core package dependencies (git, tmux, nvim, btop, fastfetch, fzf) are already installed.
+```
+
+### Config Files — Backed Up, Not Deleted
+Existing config files and directories are **moved to a `.bak` copy** before your dotfiles symlink takes their place. Nothing is permanently lost:
+
+```
+- Backing up existing ~/.config/nvim  →  ~/.config/nvim.bak
+- Linking ~/dev/terminal-dotfiles/config/nvim  →  ~/.config/nvim
+```
+
+To restore a previous config, simply remove the symlink and rename the backup:
+
+```bash
+rm ~/.config/nvim
+mv ~/.config/nvim.bak ~/.config/nvim
+```
+
+---
+
 ## 🔒 Private Keys & Machine-Specific Overrides
 
 Private API keys (such as `LLAMA_API_KEY`) and machine-specific variables are isolated in `~/.bashrc.local`, which is **never tracked in Git**.
