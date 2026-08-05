@@ -1,0 +1,9 @@
+# OS / Editor temporary files
+.DS_Store
+*.swp
+*.swo
+*~
+*.bak
+
+# Sensitive local overrides
+.bashrc.local

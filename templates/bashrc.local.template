@@ -1,0 +1,6 @@
+# Machine-specific environment variables and secrets (untracked in Git)
+# Copy this file to ~/.bashrc.local and fill in your private keys.
+#
+# Example:
+# export LLAMA_API_KEY="your_api_key_here"
+# export OPENAI_API_KEY="your_api_key_here"

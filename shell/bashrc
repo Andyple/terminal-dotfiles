@@ -1,0 +1,45 @@
+# If not running interactively, don't do anything
+[[ $- != *i* ]] && return
+
+# Source Omarchy defaults if present (Omarchy Arch Linux desktop)
+if [ -f "$HOME/.local/share/omarchy/default/bash/rc" ]; then
+  source "$HOME/.local/share/omarchy/default/bash/rc"
+fi
+
+# Environment PATH
+export PATH="$HOME/.local/bin:$PATH"
+
+if [ -f "$HOME/.local/bin/env" ]; then
+  . "$HOME/.local/bin/env"
+fi
+
+# Initialize Starship prompt if installed
+if command -v starship &>/dev/null; then
+  eval "$(starship init bash)"
+fi
+
+# Universal Aliases
+alias la='ls -al'
+
+# Devtools Agent Custom Functions
+dagent-up() {
+  aws rds start-db-instance --db-instance-identifier devtools-agent-db
+  echo "Starting database, waiting for it to come online..."
+  aws rds wait db-instance-available --db-instance-identifier devtools-agent-db
+  terraform -chdir="$HOME/dev/devtools-agent/infra" apply -auto-approve
+  echo "devtools-agent up, IP refreshed. Ready to connect."
+}
+
+dagent-down() {
+  aws rds stop-db-instance --db-instance-identifier devtools-agent-db
+  echo "devtools-agent stopping. Cost drops to storage-only (~pennies)."
+}
+
+dagent-connect() {
+  psql "$(aws ssm get-parameter --name '/devtools-agent/db_url' --with-decryption --query 'Parameter.Value' --output text)"
+}
+
+# Machine-specific secrets and overrides
+if [ -f "$HOME/.bashrc.local" ]; then
+  source "$HOME/.bashrc.local"
+fi
