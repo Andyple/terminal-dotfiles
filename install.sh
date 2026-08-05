@@ -7,7 +7,7 @@
 set -e
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-echo "🚀 Installing Terminal Dotfiles from: $DOTFILES_DIR"
+echo "[INFO] Installing Terminal Dotfiles from: $DOTFILES_DIR"
 
 # ------------------------------------------------------------------------------
 # 1. OS Detection & Package Installation
@@ -16,11 +16,11 @@ if [ -f /etc/os-release ]; then
   . /etc/os-release
   OS=$ID
 else
-  echo "⚠️ Unable to detect OS via /etc/os-release."
+  echo "[WARNING] Unable to detect OS via /etc/os-release."
   OS="unknown"
 fi
 
-echo "📦 Detected OS: $OS"
+echo "[INFO] Detected OS: $OS"
 
 # Check missing essential CLI tools
 NEEDED_PKGS=()
@@ -43,27 +43,27 @@ if [ ${#NEEDED_PKGS[@]} -gt 0 ]; then
       sudo pacman -S --needed --noconfirm git curl zsh tmux neovim btop fastfetch fzf base-devel
       ;;
     *)
-      echo "⚠️ Unsupported OS ($OS). Please ensure git, tmux, neovim, btop, and fastfetch are installed."
+      echo "[WARNING] Unsupported OS ($OS). Please ensure git, tmux, neovim, btop, and fastfetch are installed."
       ;;
   esac
 else
-  echo "✅ All core package dependencies (git, tmux, nvim, btop, fastfetch, fzf) are already installed."
+  echo "[INFO] All core package dependencies (git, tmux, nvim, btop, fastfetch, fzf) are already installed."
 fi
 
 # ------------------------------------------------------------------------------
 # 2. Starship Prompt Installation
 # ------------------------------------------------------------------------------
 if ! command -v starship &>/dev/null; then
-  echo "🌟 Installing Starship prompt engine..."
+  echo "[INFO] Installing Starship prompt engine..."
   curl -sS https://starship.rs/install.sh | sh -s -- -y
 else
-  echo "✅ Starship prompt is already installed."
+  echo "[INFO] Starship prompt is already installed."
 fi
 
 # ------------------------------------------------------------------------------
 # 3. Create ~/.config Subdirectories & Deploy Configs
 # ------------------------------------------------------------------------------
-echo "🔗 Deploying terminal configurations to ~/.config/ ..."
+echo "[INFO] Deploying terminal configurations to ~/.config/ ..."
 mkdir -p "$HOME/.config"
 
 deploy_config() {
@@ -90,7 +90,7 @@ deploy_config "$DOTFILES_DIR/config/git" "$HOME/.config/git"
 # ------------------------------------------------------------------------------
 # 4. Deploy Shell Configuration (~/.bashrc & ~/.bashrc.local)
 # ------------------------------------------------------------------------------
-echo "🐚 Deploying shell configuration..."
+echo "[INFO] Deploying shell configuration..."
 
 if [ -f "$HOME/.bashrc" ] && [ ! -L "$HOME/.bashrc" ]; then
   echo "  - Backing up ~/.bashrc to ~/.bashrc.bak"
@@ -105,7 +105,7 @@ if [ ! -f "$HOME/.bashrc.local" ]; then
 fi
 
 echo "=============================================================================="
-echo "🎉 Terminal environment setup complete!"
-echo "👉 Run 'source ~/.bashrc' or restart your shell to apply changes."
-echo "👉 Add any machine-specific secrets/keys to ~/.bashrc.local"
+echo "Terminal environment setup complete."
+echo "Run 'source ~/.bashrc' or restart your shell to apply changes."
+echo "Add any machine-specific secrets/keys to ~/.bashrc.local"
 echo "=============================================================================="
