@@ -9,7 +9,7 @@ set -e
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "[INFO] Installing Terminal Dotfiles from: $DOTFILES_DIR"
 
-ALL_COMPONENTS=("nvim" "tmux" "btop" "fastfetch" "starship" "git" "shell")
+ALL_COMPONENTS=("nvim" "tmux" "btop" "fastfetch" "starship" "git" "shell" "alacritty")
 ONLY_LIST=()
 EXCLUDE_LIST=()
 HAS_ONLY=false
@@ -20,14 +20,15 @@ Usage: ./install.sh [OPTIONS]
 
 Options:
   -o, --only <components>               Install ONLY the specified components (comma-separated).
-                                        Available: nvim, tmux, btop, fastfetch, starship, git, shell
+                                        Available: nvim, tmux, btop, fastfetch, starship, git, shell, alacritty
   -x, -e, --exclude, --except <components>
                                         Install all components EXCEPT the specified ones (comma-separated).
   -h, --help                            Show this help message.
 
 Examples:
-  ./install.sh                          # Install everything
+  ./install.sh                          # Install everything (alacritty only configured if already present)
   ./install.sh --only nvim,tmux         # Install only neovim and tmux
+  ./install.sh --only alacritty         # Install alacritty and deploy config even if missing
   ./install.sh --exclude btop,fastfetch # Install everything except btop and fastfetch
 EOF
   exit 0
@@ -91,6 +92,13 @@ is_enabled() {
     fi
   done
 
+  # Alacritty rule: if --only is NOT specified, only enable alacritty if already installed on system
+  if [ "$comp" = "alacritty" ] && [ "$HAS_ONLY" = false ]; then
+    if ! command -v alacritty &>/dev/null; then
+      return 1
+    fi
+  fi
+
   return 0
 }
 
@@ -128,6 +136,7 @@ if is_enabled "tmux" && ! command -v tmux &>/dev/null; then NEEDED_PKGS+=("tmux"
 if is_enabled "nvim" && ! command -v nvim &>/dev/null; then NEEDED_PKGS+=("neovim"); fi
 if is_enabled "btop" && ! command -v btop &>/dev/null; then NEEDED_PKGS+=("btop"); fi
 if is_enabled "fastfetch" && ! command -v fastfetch &>/dev/null; then NEEDED_PKGS+=("fastfetch"); fi
+if is_enabled "alacritty" && ! command -v alacritty &>/dev/null; then NEEDED_PKGS+=("alacritty"); fi
 
 if [ ${#NEEDED_PKGS[@]} -gt 0 ]; then
   echo "Missing packages: ${NEEDED_PKGS[*]}"
@@ -187,6 +196,7 @@ if is_enabled "btop"; then deploy_config "$DOTFILES_DIR/config/btop" "$HOME/.con
 if is_enabled "fastfetch"; then deploy_config "$DOTFILES_DIR/config/fastfetch" "$HOME/.config/fastfetch"; fi
 if is_enabled "starship"; then deploy_config "$DOTFILES_DIR/config/starship.toml" "$HOME/.config/starship.toml"; fi
 if is_enabled "git"; then deploy_config "$DOTFILES_DIR/config/git" "$HOME/.config/git"; fi
+if is_enabled "alacritty"; then deploy_config "$DOTFILES_DIR/config/alacritty" "$HOME/.config/alacritty"; fi
 
 # ------------------------------------------------------------------------------
 # 4. Deploy Shell Configuration (~/.bashrc & ~/.bashrc.local)

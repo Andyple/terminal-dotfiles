@@ -12,6 +12,7 @@ Cross-platform Linux terminal configuration repository powering an identical wor
 - **Fastfetch** (`~/.config/fastfetch/config.jsonc`): Fastfetch layout.
 - **Starship Prompt** (`~/.config/starship.toml`): Fast, cyan-themed shell prompt displaying git status, current directory, and execution status.
 - **Git Config** (`~/.config/git/config`): Presets (`co`, `br`, `ci`, `st`), histogram diffs, rebase on pull, branch sorting.
+- **Alacritty** (`~/.config/alacritty`): Terminal emulator configuration (conditionally deployed if already installed or explicitly requested via `--only`).
 - **Bash Environment** (`~/.bashrc`): Custom aliases (`la='ls -al'`), helper functions (`dagent-up`, `dagent-down`, `dagent-connect`), and support for machine-specific secrets (`~/.bashrc.local`).
 
 ---
@@ -36,10 +37,10 @@ curl -fsSL https://raw.githubusercontent.com/Andyple/terminal-dotfiles/main/inst
 
 ## Installation Flags & Selective Deployment
 
-Available components: `nvim`, `tmux`, `btop`, `fastfetch`, `starship`, `git`, `shell`.
+Available components: `nvim`, `tmux`, `btop`, `fastfetch`, `starship`, `git`, `shell`, `alacritty`.
 
-- **Default (No flags)**: Installs and deploys all components.
-- **`-o`, `--only <components>`**: Install ONLY specific components.
+- **Default (No flags)**: Installs and deploys all components. (Note: `alacritty` config is only copied if `alacritty` is already installed on the system).
+- **`-o`, `--only <components>`**: Install ONLY specific components. Explicitly specifying `alacritty` via `--only` will force install `alacritty` if missing.
 - **`-x`, `-e`, `--exclude`, `--except <components>`**: Install everything EXCEPT specific components.
 
 ### Examples
@@ -52,6 +53,11 @@ Install everything:
 Install only Neovim and Tmux:
 ```bash
 ./install.sh --only nvim,tmux
+```
+
+Install Alacritty explicitly (forces installation if missing):
+```bash
+./install.sh --only alacritty
 ```
 
 Install everything except Btop and Fastfetch:
