@@ -3,7 +3,7 @@
 *.swp
 *.swo
 *~
-*.bak
+*.bak*
 
 # Sensitive local overrides
 .bashrc.local

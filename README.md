@@ -13,6 +13,7 @@ Cross-platform Linux terminal configuration repository powering an identical wor
 - **Starship Prompt** (`~/.config/starship.toml`): Fast, cyan-themed shell prompt displaying git status, current directory, and execution status.
 - **Git Config** (`~/.config/git/config`): Presets (`co`, `br`, `ci`, `st`), histogram diffs, rebase on pull, branch sorting.
 - **Alacritty** (`~/.config/alacritty`): Terminal emulator configuration (conditionally deployed if already installed or explicitly requested via `--only`).
+- **Hyprland** (`~/.config/hypr`): Wayland compositor configuration (conditionally deployed if already installed or explicitly requested via `--only`).
 - **Bash Environment** (`~/.bashrc`): Custom aliases (`la='ls -al'`), helper functions (`dagent-up`, `dagent-down`, `dagent-connect`), and support for machine-specific secrets (`~/.bashrc.local`).
 
 ---
@@ -37,10 +38,10 @@ curl -fsSL https://raw.githubusercontent.com/Andyple/terminal-dotfiles/main/inst
 
 ## Installation Flags & Selective Deployment
 
-Available components: `nvim`, `tmux`, `btop`, `fastfetch`, `starship`, `git`, `shell`, `alacritty`.
+Available components: `nvim`, `tmux`, `btop`, `fastfetch`, `starship`, `git`, `shell`, `alacritty`, `hyprland`.
 
-- **Default (No flags)**: Installs and deploys all components. (Note: `alacritty` config is only copied if `alacritty` is already installed on the system).
-- **`-o`, `--only <components>`**: Install ONLY specific components. Explicitly specifying `alacritty` via `--only` will force install `alacritty` if missing.
+- **Default (No flags)**: Installs and deploys all components. (Note: `alacritty` and `hyprland` configs are only copied if already installed on the system).
+- **`-o`, `--only <components>`**: Install ONLY specific components. Explicitly specifying `alacritty` or `hyprland` via `--only` will force install them if missing.
 - **`-x`, `-e`, `--exclude`, `--except <components>`**: Install everything EXCEPT specific components.
 
 ### Examples
@@ -58,6 +59,11 @@ Install only Neovim and Tmux:
 Install Alacritty explicitly (forces installation if missing):
 ```bash
 ./install.sh --only alacritty
+```
+
+Install Hyprland explicitly (forces installation if missing):
+```bash
+./install.sh --only hyprland
 ```
 
 Install everything except Btop and Fastfetch:

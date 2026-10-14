@@ -9,7 +9,7 @@ set -e
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "[INFO] Installing Terminal Dotfiles from: $DOTFILES_DIR"
 
-ALL_COMPONENTS=("nvim" "tmux" "btop" "fastfetch" "starship" "git" "shell" "alacritty")
+ALL_COMPONENTS=("nvim" "tmux" "btop" "fastfetch" "starship" "git" "shell" "alacritty" "hyprland")
 ONLY_LIST=()
 EXCLUDE_LIST=()
 HAS_ONLY=false
@@ -20,15 +20,16 @@ Usage: ./install.sh [OPTIONS]
 
 Options:
   -o, --only <components>               Install ONLY the specified components (comma-separated).
-                                        Available: nvim, tmux, btop, fastfetch, starship, git, shell, alacritty
+                                        Available: nvim, tmux, btop, fastfetch, starship, git, shell, alacritty, hyprland
   -x, -e, --exclude, --except <components>
                                         Install all components EXCEPT the specified ones (comma-separated).
   -h, --help                            Show this help message.
 
 Examples:
-  ./install.sh                          # Install everything (alacritty only configured if already present)
+  ./install.sh                          # Install everything (alacritty and hyprland only configured if already present)
   ./install.sh --only nvim,tmux         # Install only neovim and tmux
   ./install.sh --only alacritty         # Install alacritty and deploy config even if missing
+  ./install.sh --only hyprland          # Install hyprland and deploy config even if missing
   ./install.sh --exclude btop,fastfetch # Install everything except btop and fastfetch
 EOF
   exit 0
@@ -99,6 +100,13 @@ is_enabled() {
     fi
   fi
 
+  # Hyprland rule: if --only is NOT specified, only enable hyprland if already installed on system
+  if [ "$comp" = "hyprland" ] && [ "$HAS_ONLY" = false ]; then
+    if ! command -v Hyprland &>/dev/null && ! command -v hyprctl &>/dev/null; then
+      return 1
+    fi
+  fi
+
   return 0
 }
 
@@ -137,6 +145,7 @@ if is_enabled "nvim" && ! command -v nvim &>/dev/null; then NEEDED_PKGS+=("neovi
 if is_enabled "btop" && ! command -v btop &>/dev/null; then NEEDED_PKGS+=("btop"); fi
 if is_enabled "fastfetch" && ! command -v fastfetch &>/dev/null; then NEEDED_PKGS+=("fastfetch"); fi
 if is_enabled "alacritty" && ! command -v alacritty &>/dev/null; then NEEDED_PKGS+=("alacritty"); fi
+if is_enabled "hyprland" && ! command -v Hyprland &>/dev/null; then NEEDED_PKGS+=("hyprland"); fi
 
 if [ ${#NEEDED_PKGS[@]} -gt 0 ]; then
   echo "Missing packages: ${NEEDED_PKGS[*]}"
@@ -197,6 +206,7 @@ if is_enabled "fastfetch"; then deploy_config "$DOTFILES_DIR/config/fastfetch" "
 if is_enabled "starship"; then deploy_config "$DOTFILES_DIR/config/starship.toml" "$HOME/.config/starship.toml"; fi
 if is_enabled "git"; then deploy_config "$DOTFILES_DIR/config/git" "$HOME/.config/git"; fi
 if is_enabled "alacritty"; then deploy_config "$DOTFILES_DIR/config/alacritty" "$HOME/.config/alacritty"; fi
+if is_enabled "hyprland"; then deploy_config "$DOTFILES_DIR/config/hypr" "$HOME/.config/hypr"; fi
 
 # ------------------------------------------------------------------------------
 # 4. Deploy Shell Configuration (~/.bashrc & ~/.bashrc.local)
